@@ -1,0 +1,39 @@
+---
+# tasks file for roles/elkdocker
+- name: Create docker directory
+  file:
+    path: docker
+    state: directory
+
+- name: Copy from docker directory files to remote machine
+  copy:
+    src: docker/
+    dest: docker/
+
+- name: Build the image for sebp/elk
+  docker_image:
+    name: elkstack
+    build:
+      path: docker/elkstack/
+      pull: no
+    state: present
+    source: build
+
+- name: Clear IPTables filter
+  shell: iptables -F; iptables -X
+
+- name: Restart Docker
+  service:
+    name: docker
+    state: restarted
+
+# tasks file for roles/rundockercontainer
+- name: Build elkstack container
+  docker_container:
+    name: elkstack
+    image: elkstack:latest
+    state: started
+    ports:
+      - 5704:5704
+      - 5302:5302
+      - 5022:5022
